@@ -19,10 +19,12 @@ namespace PracticeExercise4
             }
 
 		}
+        private int count = 0;
+        private readonly double MAX_LOAD_FACTOR = 0.6;
 
-        public int Count => throw new NotImplementedException();
+        public int Count => count;
 
-        public double LoadFactor => throw new NotImplementedException();
+        public double LoadFactor => Count / (double)buckets.Length;
 
         public bool Add(K key, V value)
         {
@@ -57,6 +59,32 @@ namespace PracticeExercise4
         public bool Remove(K key)
         {
             throw new NotImplementedException();
+        }
+
+        private int Hash(K key)
+        {
+            int hash = key.GetHashCode();
+
+            return hash < 0 ? -hash : hash;
+        }
+        private void Resize()
+        {
+            var newBuckets = new Bucket<K, V>[2 * buckets.Length];
+            var oldBuckets = buckets;
+
+            buckets = newBuckets;
+
+            for (int i = 0; i < buckets.Length; i++)
+            {
+                buckets[i] = new Bucket<K, V>();
+            }
+
+            count = 0;
+            //Rehash all existing buckets to new hashtable
+            foreach(var bucket in oldBuckets)
+            {
+                Add(bucket.Key, bucket.Value);
+            }
         }
     }
 }
