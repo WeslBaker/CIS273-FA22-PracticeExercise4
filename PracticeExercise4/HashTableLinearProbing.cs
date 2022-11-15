@@ -183,7 +183,10 @@ namespace PracticeExercise4
 
             foreach (var bucket in buckets)
             {
-                values.Add(bucket.Value);
+                if(bucket.State.Equals(BucketState.Full))
+                {
+                    values.Add(bucket.Value);
+                }
             }
             return values;
         }
