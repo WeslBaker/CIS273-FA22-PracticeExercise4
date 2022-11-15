@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 
 namespace PracticeExercise4
 {
@@ -23,8 +24,6 @@ namespace PracticeExercise4
         private readonly double MAX_LOAD_FACTOR = 0.6;
 
         public int Count => count;
-
-        public double LoadFactor => Count / (double)buckets.Length;
 
         public double LoadFactor => count / (double)buckets.Length;
 
@@ -75,42 +74,162 @@ namespace PracticeExercise4
         // O(n) - worst case
         public bool ContainsKey(K key)
         {
-            throw new NotImplementedException();
+            //Find the hashcode of the key
+            int hash = Hash(key);
+
+            //Identify where the key SHOULD have been placed originally
+            int index = hash % buckets.Length;
+
+            //If the key is located at the expected index, return true, if the index is empty return false
+            if (buckets[index].State.Equals(BucketState.Full))
+            {
+                if (buckets[index].Key.Equals(key))
+                    return true;
+            }
+            else
+            {
+                return false;
+            }
+
+            //Starting after the ideal index, iterate through the table till the key is found or a slot is found empty since creation
+            int currentIndex = index + 1;
+
+            while(currentIndex != index)
+            {
+                if (buckets[currentIndex].Key.Equals(key))
+                {
+                    return true;
+                }
+                else if(buckets[currentIndex].State.Equals(BucketState.EmptySinceStart))
+                {
+                    return false;
+                }
+                
+                currentIndex++;
+                currentIndex = currentIndex % buckets.Length;
+            }
+            return false;
         }
 
         // O(n) - average case
         // O(n) - worst case
         public bool ContainsValue(V value)
         {
-            throw new NotImplementedException();
+            //Loop through the list, return true if the value is found
+            foreach(var index in buckets)
+            {
+                if(index.State.Equals(BucketState.Full))
+                {
+                    if(index.Value.Equals(value))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         // O(1) - average case
         // O(n) - worst case
         public V Get(K key)
         {
-            throw new NotImplementedException();
+            //Hash the key
+            int hash = Hash(key);
+
+            //Find the index where it ought to be
+            int index = hash % buckets.Length;
+
+            //Check that index, if the key matches return the value
+            if (buckets[index].Key.Equals(key))
+            {
+                return buckets[index].Value;
+            }
+
+            //Search the following indices until the matching key is found or an empty since start
+            int currentIndex = index + 1;
+
+            while (currentIndex != index)
+            {
+                if (buckets[currentIndex].Key.Equals(key))
+                {
+                    return buckets[currentIndex].Value;
+                }
+
+                currentIndex++;
+                currentIndex = currentIndex % buckets.Length;
+            }
+
+            return default;
         }
 
         // O(n) - average case
         // O(n) - worst case
         public List<K> GetKeys()
         {
-            throw new NotImplementedException();
+            List<K> keys = new List<K>();
+
+            foreach(var bucket in buckets)
+            {
+                keys.Add(bucket.Key);
+            }
+            return keys;
         }
 
         // O(n) - average case
         // O(n) - worst case
         public List<V> GetValues()
         {
-            throw new NotImplementedException();
+            List<V> values = new List<V>();
+
+            foreach (var bucket in buckets)
+            {
+                values.Add(bucket.Value);
+            }
+            return values;
         }
 
         // O(1) - average case
         // O(n) - worst case
         public bool Remove(K key)
         {
-            throw new NotImplementedException();
+            //Hash the key
+            int hash = Hash(key);
+
+            //Find the index of the key
+            int index = hash % buckets.Length;
+
+            //Check the expected index first--get O(n) complexity in best case
+            if (buckets[index].State.Equals(BucketState.Full))
+            {
+                if (buckets[index].Key.Equals(key))
+                {
+                    buckets[index] = new Bucket<K, V>();
+                    buckets[index].State = BucketState.EmptyAfterRemoval;
+                    count--;
+                    return true;
+                }
+            }
+
+            //Iterate through and check all, remove if found
+            int currentIndex = index + 1;
+
+            while (currentIndex != index)
+            {
+                if (buckets[index].State.Equals(BucketState.Full))
+                {
+                    if (buckets[currentIndex].Key.Equals(key))
+                    {
+                        buckets[index] = new Bucket<K, V>();
+                        buckets[index].State = BucketState.EmptyAfterRemoval;
+                        count--;
+                        return true;
+                    }
+                }
+
+                currentIndex++;
+                currentIndex = currentIndex % buckets.Length;
+            }
+            return false;
         }
 
         private void Resize()
@@ -119,7 +238,7 @@ namespace PracticeExercise4
             var oldBuckets = buckets;
 
             buckets = newBuckets;
-            for(int i=0; i < buckets.Length; i++)
+            for (int i = 0; i < buckets.Length; i++)
             {
                 buckets[i] = new Bucket<K, V>();
             }
@@ -127,9 +246,9 @@ namespace PracticeExercise4
             count = 0;
 
             // rehash all the old/existing buckets into the new array/hashtable
-            foreach( var bucket in oldBuckets)
+            foreach (var bucket in oldBuckets)
             {
-                if( bucket.State == BucketState.Full)
+                if (bucket.State == BucketState.Full)
                 {
                     Add(bucket.Key, bucket.Value);
                 }
